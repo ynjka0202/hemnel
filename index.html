@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="mn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Хэмнэл — цаг төлөвлөгч</title>
+  <meta name="theme-color" content="#F7F4EF">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <script>
+    // Хуудас ачаалахаас өмнө горимыг тохируулна (цагаан анивчихгүй)
+    (function () {
+      try {
+        var t = localStorage.getItem('hemnel-theme') || 'auto';
+        var dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+
+<!-- ============ Тохиргоо дутуу ============ -->
+<section id="config-screen" class="center-screen" hidden>
+  <div class="card narrow">
+    <h1>Тохиргоо дутуу байна</h1>
+    <p class="muted"><code>js/config.js</code> файлд Supabase-ийн <b>Project URL</b> болон <b>publishable key</b>-ээ бичнэ үү.</p>
+  </div>
+</section>
+
+<!-- ============ Нэвтрэх / Бүртгүүлэх ============ -->
+<section id="auth-screen" class="center-screen" hidden>
+  <div class="card narrow">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span class="brand-name">Хэмнэл</span>
+    </div>
+    <p class="muted">Өдрийн цагаа хугацаа, эрэмбээр нь төлөвлө.</p>
+
+    <div class="segmented" role="tablist" aria-label="Нэвтрэх эсвэл бүртгүүлэх">
+      <button type="button" role="tab" id="tab-login" aria-selected="true">Нэвтрэх</button>
+      <button type="button" role="tab" id="tab-register" aria-selected="false">Бүртгүүлэх</button>
+    </div>
+
+    <form id="auth-form" class="stack" novalidate>
+      <div class="field" id="name-field" hidden>
+        <label for="auth-name">Нэр</label>
+        <input id="auth-name" name="name" type="text" autocomplete="given-name" maxlength="40" placeholder="Анжи">
+      </div>
+      <div class="field">
+        <label for="auth-email">Имэйл</label>
+        <input id="auth-email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+      </div>
+      <div class="field">
+        <label for="auth-password">Нууц үг</label>
+        <input id="auth-password" name="password" type="password" autocomplete="current-password" required minlength="6" placeholder="6+ тэмдэгт">
+      </div>
+      <p id="auth-msg" class="form-msg" role="alert"></p>
+      <button type="submit" class="btn btn-primary btn-block" id="auth-submit">Нэвтрэх</button>
+    </form>
+  </div>
+</section>
+
+<!-- ============ Үндсэн апп ============ -->
+<div id="app" class="app" hidden>
+  <nav class="sidebar" aria-label="Үндсэн цэс">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+      <span class="brand-name">Хэмнэл</span>
+    </div>
+    <a href="#" class="nav-item active" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      Өнөөдөр
+    </a>
+    <span class="nav-item disabled" aria-disabled="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      Долоо хоног <em>удахгүй</em>
+    </span>
+    <span class="nav-item disabled" aria-disabled="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>
+      Матриц <em>удахгүй</em>
+    </span>
+    <span class="nav-item disabled" aria-disabled="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      Статистик <em>удахгүй</em>
+    </span>
+    <div class="grow"></div>
+    <button type="button" class="btn btn-ghost theme-btn" data-action="theme">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      <span class="theme-label">Горим: автомат</span>
+    </button>
+    <div class="user-row">
+      <span class="avatar" id="avatar">А</span>
+      <div class="user-text">
+        <span id="user-name" class="strong">—</span>
+        <span id="user-email" class="muted small">—</span>
+      </div>
+      <button type="button" class="icon-btn" data-action="logout" aria-label="Гарах" title="Гарах">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H3"/></svg>
+      </button>
+    </div>
+  </nav>
+
+  <main class="main">
+    <header class="page-head">
+      <div class="head-text">
+        <span id="today-label" class="muted strong-600">—</span>
+        <h1 id="greeting">Сайн байна уу</h1>
+      </div>
+      <div class="head-actions">
+        <div class="progress-box">
+          <span id="progress-label" class="muted small strong-600">—</span>
+          <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+        </div>
+        <button type="button" class="btn btn-primary desktop-only" data-action="new">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          Шинэ ажил
+        </button>
+        <button type="button" class="icon-btn mobile-only" data-action="theme" aria-label="Горим солих">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="mobile-progress">
+      <div><span>Өнөөдрийн явц</span><b id="m-progress">0 / 0</b></div>
+      <div class="progress" aria-hidden="true"><span id="m-progress-bar"></span></div>
+    </div>
+
+    <div class="segmented mobile-only" role="tablist" aria-label="Харагдац">
+      <button type="button" role="tab" id="view-list" aria-selected="true">Жагсаалт</button>
+      <button type="button" role="tab" id="view-time" aria-selected="false">Цагийн хуваарь</button>
+    </div>
+
+    <div class="today-grid">
+      <section class="task-col" aria-label="Ажлууд" id="task-col"></section>
+      <section class="timeline-card" aria-label="Өдрийн цагийн хуваарь">
+        <div class="timeline-head">
+          <h2>Цагийн хуваарь</h2>
+          <span class="muted small strong-600">06:00 – 24:00</span>
+        </div>
+        <div class="timeline-scroll" id="timeline-scroll">
+          <div class="timeline" id="timeline"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <button type="button" class="fab mobile-only" data-action="new" aria-label="Шинэ ажил нэмэх">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+
+  <nav class="bottom-nav mobile-only" aria-label="Үндсэн цэс">
+    <a href="#" class="active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Өнөөдөр</a>
+    <span aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>7 хоног</span>
+    <span aria-disabled="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>Матриц</span>
+    <button type="button" data-action="logout"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H3"/></svg>Гарах</button>
+  </nav>
+</div>
+
+<!-- ============ Ажил нэмэх / засах ============ -->
+<dialog id="task-dialog" class="sheet" aria-labelledby="task-dialog-title">
+  <form id="task-form" class="stack" novalidate>
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <h2 id="task-dialog-title">Шинэ ажил</h2>
+      <button type="button" class="icon-btn" data-action="close-dialog" aria-label="Хаах">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+
+    <div class="field">
+      <label for="f-title">Нэр</label>
+      <input id="f-title" name="title" type="text" maxlength="120" required placeholder="Жишээ: Тайлангийн 3-р бүлэг бичих">
+    </div>
+
+    <fieldset class="field">
+      <legend>Ангилал</legend>
+      <div class="chips" id="f-category">
+        <label class="chip"><input type="radio" name="category" value="Хичээл"><span>Хичээл</span></label>
+        <label class="chip"><input type="radio" name="category" value="Ажил"><span>Ажил</span></label>
+        <label class="chip"><input type="radio" name="category" value="Хувийн" checked><span>Хувийн</span></label>
+        <label class="chip"><input type="radio" name="category" value="Эрүүл мэнд"><span>Эрүүл мэнд</span></label>
+        <label class="chip"><input type="radio" name="category" value="Бусад"><span>Бусад</span></label>
+      </div>
+    </fieldset>
+
+    <div class="row-2">
+      <div class="field">
+        <label for="f-due-date">Хугацаа (огноо)</label>
+        <input id="f-due-date" name="dueDate" type="date">
+      </div>
+      <div class="field">
+        <label for="f-due-time">Цаг</label>
+        <input id="f-due-time" name="dueTime" type="time">
+      </div>
+    </div>
+
+    <div class="row-2">
+      <label class="toggle toggle-imp"><input type="checkbox" name="important" id="f-important">
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>Чухал</span>
+      </label>
+      <label class="toggle toggle-urg"><input type="checkbox" name="urgent" id="f-urgent">
+        <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>Яаралтай</span>
+      </label>
+    </div>
+
+    <div class="quad-preview" id="quad-preview" aria-live="polite">
+      <span class="pill" id="qp-code">Q4</span>
+      <div class="stack-tight">
+        <span class="strong" id="qp-name">Хойшлуул</span>
+        <span class="muted small" id="qp-hint">Хугацаа 48 цагаас бага үлдвэл автоматаар яаралтай болно</span>
+      </div>
+    </div>
+
+    <label class="switch-row">
+      <input type="checkbox" id="f-schedule" name="schedule">
+      <span>Цаг оноох (цагийн хуваарьт харагдана)</span>
+    </label>
+    <div class="row-3" id="schedule-fields" hidden>
+      <div class="field">
+        <label for="f-block-date">Өдөр</label>
+        <input id="f-block-date" name="blockDate" type="date">
+      </div>
+      <div class="field">
+        <label for="f-start">Эхлэх</label>
+        <input id="f-start" name="start" type="time" step="300">
+      </div>
+      <div class="field">
+        <label for="f-end">Дуусах</label>
+        <input id="f-end" name="end" type="time" step="300">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="f-desc">Тайлбар</label>
+      <textarea id="f-desc" name="description" rows="2" maxlength="1000" placeholder="Заавал биш"></textarea>
+    </div>
+
+    <p id="task-msg" class="form-msg" role="alert"></p>
+
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-danger" id="delete-btn" hidden>Устгах</button>
+      <span class="grow"></span>
+      <button type="button" class="btn btn-ghost" data-action="close-dialog">Болих</button>
+      <button type="submit" class="btn btn-primary" id="save-btn">Хадгалах</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

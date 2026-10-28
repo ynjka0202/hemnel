@@ -82,3 +82,43 @@ create policy "settings_own" on public.user_settings for all to authenticated
 drop policy if exists "tasks_own" on public.tasks;
 create policy "tasks_own" on public.tasks for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------- 6. Data API эрх ----------
+-- Төсөл үүсгэхдээ «Automatically expose new tables»-ийг унтраасан байсан ч ажиллана.
+-- Хэн юуг харахыг дээрх RLS дүрэм хязгаарлана.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.tasks, public.user_settings to authenticated;
+
+-- ============================================================
+-- ХУВИЛБАР 2–3 (давтагдах ажил, Pomodoro)
+-- Энэ файлыг дахин бүхэлд нь ажиллуулж болно.
+-- ============================================================
+
+-- Давтагдах гаригууд 0 (Ням) … 6 (Бямба)
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'tasks_repeat_days_chk') then
+    alter table public.tasks add constraint tasks_repeat_days_chk
+      check (repeat_days is null or repeat_days <@ array[0,1,2,3,4,5,6]::smallint[]);
+  end if;
+end $$;
+
+create index if not exists tasks_series_idx on public.tasks (series_id);
+
+-- ---------- 7. Pomodoro ----------
+create table if not exists public.pomodoro_sessions (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  task_id    uuid references public.tasks(id) on delete set null,
+  started_at timestamptz not null default now(),
+  minutes    int not null check (minutes between 1 and 120),
+  created_at timestamptz not null default now()
+);
+create index if not exists pomodoro_user_started_idx on public.pomodoro_sessions (user_id, started_at);
+
+alter table public.pomodoro_sessions enable row level security;
+drop policy if exists "pomodoro_own" on public.pomodoro_sessions;
+create policy "pomodoro_own" on public.pomodoro_sessions for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+grant select, insert, update, delete on public.pomodoro_sessions to authenticated;
